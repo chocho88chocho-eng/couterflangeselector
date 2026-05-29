@@ -1,383 +1,390 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Layers, FileSpreadsheet, Upload, ChevronDown } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Flange Master</title>
+    
+    <!-- 1. 필수 라이브러리 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { margin: 0; padding: 0; background-color: #F1F5F9; font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// ASME B16.1 / B16.5 UNC Thread Data (TPI - Threads Per Inch)
-const UNC_THREAD_DATA = {
-  "1/2": "13",
-  "5/8": "11",
-  "3/4": "10",
-  "7/8": "9",
-  "1": "8",
-  "1-1/8": "7",
-  "1-1/4": "7",
-  "1-3/8": "6",
-  "1-1/2": "6",
-  "1-5/8": "8", // 1인치 초과 대형 볼트의 경우 8UN을 쓰기도 하나 기본 UNC 기준 매칭
-  "1-3/4": "5",
-  "1-7/8": "8",
-  "2": "4.5"
-};
+    <script type="text/babel">
+        // [주의] 절대 import 문구를 쓰지 않습니다.
+        const { useState, useMemo, useEffect } = React;
 
-// ASME B16.5 Raised Face (RF) 외경 표준 데이터 (mm)
-const B16_5_RF_DATA = {
-  "0.5": 34.9, "0.75": 42.9, "1": 50.8, "1.25": 63.5, "1.5": 73.0, 
-  "2": 92.1, "2.5": 104.8, "3": 127.0, "3.5": 139.7, "4": 157.2, 
-  "5": 185.7, "6": 215.9, "8": 269.9, "10": 323.8, "12": 381.0, 
-  "14": 412.8, "16": 469.9, "18": 533.4, "20": 584.2, "24": 692.2
-};
+        // 아이콘을 외부에서 불러오지 않고 직접 그립니다 (깨짐 방지)
+        const Search = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+        const Layers = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 12 12 17 22 12"></polyline><polyline points="2 17 12 22 22 17"></polyline></svg>;
+        const FileSpreadsheet = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>;
+        const Upload = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>;
+        const ChevronDown = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"></polyline></svg>;
 
-// ASME B16.5 DIAMETER OF BOLT HOLES (타공 구멍 직경) 표준 데이터 (mm)
-const B16_5_HOLE_DATA = {
-  "0.5": 15.9, "0.75": 19.1, "1": 19.1, "1.25": 19.1, "1.5": 22.2, 
-  "2": 19.1, "2.5": 22.2, "3": 22.2, "3.5": 22.2, "4": 22.2, 
-  "5": 22.2, "6": 22.2, "8": 25.4, "10": 28.6, "12": 31.8, 
-  "14": 31.8, "16": 34.9, "18": 34.9, "20": 34.9, "24": 41.3
-};
+        const UNC_THREAD_DATA = {
+          "1/2": "13", "5/8": "11", "3/4": "10", "7/8": "9", "1": "8",
+          "1-1/8": "7", "1-1/4": "7", "1-3/8": "6", "1-1/2": "6",
+          "1-5/8": "8", "1-3/4": "5", "1-7/8": "8", "2": "4.5"
+        };
 
-const App = () => {
-  const [data, setData] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState('');
-  const [selectedRating, setSelectedRating] = useState('');
-  const [sizeInput, setSizeInput] = useState('');
-  const [isFileLoaded, setIsFileLoaded] = useState(false);
-  const [error, setError] = useState(null);
-  const [isXLSXReady, setIsXLSXReady] = useState(false);
+        const B16_5_RF_DATA = {
+          "0.5": 34.9, "0.75": 42.9, "1": 50.8, "1.25": 63.5, "1.5": 73.0, 
+          "2": 92.1, "2.5": 104.8, "3": 127.0, "3.5": 139.7, "4": 157.2, 
+          "5": 185.7, "6": 215.9, "8": 269.9, "10": 323.8, "12": 381.0, 
+          "14": 412.8, "16": 469.9, "18": 533.4, "20": 584.2, "24": 692.2
+        };
 
-  useEffect(() => {
-    if (window.XLSX) {
-      setIsXLSXReady(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-    script.async = true;
-    script.onload = () => setIsXLSXReady(true);
-    document.head.appendChild(script);
-  }, []);
+        const B16_5_HOLE_DATA = {
+          "0.5": 15.9, "0.75": 19.1, "1": 19.1, "1.25": 19.1, "1.5": 22.2, 
+          "2": 19.1, "2.5": 22.2, "3": 22.2, "3.5": 22.2, "4": 22.2, 
+          "5": 22.2, "6": 22.2, "8": 25.4, "10": 28.6, "12": 31.8, 
+          "14": 31.8, "16": 34.9, "18": 34.9, "20": 34.9, "24": 41.3
+        };
 
-  const parseSize = (sizeStr) => {
-    if (!sizeStr) return null;
-    let cleanSize = sizeStr.replace(/"/g, '').trim();
-    if (cleanSize.includes(' ')) {
-      const parts = cleanSize.split(' ');
-      const fraction = parts[1].split('/');
-      return (parseFloat(parts[0]) + (parseFloat(fraction[0]) / parseFloat(fraction[1]))).toString();
-    } else if (cleanSize.includes('/')) {
-      const fraction = cleanSize.split('/');
-      return (parseFloat(fraction[0]) / parseFloat(fraction[1])).toString();
-    }
-    return parseFloat(cleanSize).toString();
-  };
+        const App = () => {
+          const [data, setData] = useState([]);
+          const [groups, setGroups] = useState([]);
+          const [selectedGroup, setSelectedGroup] = useState('');
+          const [selectedRating, setSelectedRating] = useState('');
+          const [sizeInput, setSizeInput] = useState('');
+          const [isFileLoaded, setIsFileLoaded] = useState(false);
+          const [error, setError] = useState(null);
 
-  const getFullBoltSpec = (boltSizeStr) => {
-    if (!boltSizeStr) return "-";
-    // 인치 기호(") 제거 후 데이터 매칭
-    const cleanSize = boltSizeStr.replace(/"/g, '').trim();
-    const tpi = UNC_THREAD_DATA[cleanSize];
-    return tpi ? `${boltSizeStr}-${tpi} UNC` : boltSizeStr;
-  };
+          const parseSize = (sizeStr) => {
+            if (!sizeStr) return null;
+            let cleanSize = sizeStr.replace(/"/g, '').trim();
+            if (cleanSize.includes(' ')) {
+              const parts = cleanSize.split(' ');
+              const fraction = parts[1].split('/');
+              return (parseFloat(parts[0]) + (parseFloat(fraction[0]) / parseFloat(fraction[1]))).toString();
+            } else if (cleanSize.includes('/')) {
+              const fraction = cleanSize.split('/');
+              return (parseFloat(fraction[0]) / parseFloat(fraction[1])).toString();
+            }
+            return parseFloat(cleanSize).toString();
+          };
 
-  const getRFDiameter = (sizeStr) => {
-    const numSize = parseSize(sizeStr);
-    return B16_5_RF_DATA[numSize] ? `${B16_5_RF_DATA[numSize]} mm` : "-";
-  };
+          const getFullBoltSpec = (boltSizeStr) => {
+            if (!boltSizeStr) return "-";
+            const cleanSize = boltSizeStr.replace(/"/g, '').trim();
+            const tpi = UNC_THREAD_DATA[cleanSize];
+            return tpi ? `${boltSizeStr}-${tpi} UNC` : boltSizeStr;
+          };
 
-  const getHoleSize = (sizeStr) => {
-    const numSize = parseSize(sizeStr);
-    return B16_5_HOLE_DATA[numSize] ? `${B16_5_HOLE_DATA[numSize]} mm` : "-";
-  };
+          const getRFDiameter = (sizeStr) => {
+            const numSize = parseSize(sizeStr);
+            return B16_5_RF_DATA[numSize] ? `${B16_5_RF_DATA[numSize]} mm` : "-";
+          };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+          const getHoleSize = (sizeStr) => {
+            const numSize = parseSize(sizeStr);
+            return B16_5_HOLE_DATA[numSize] ? `${B16_5_HOLE_DATA[numSize]} mm` : "-";
+          };
 
-    if (!isXLSXReady) {
-      setError("라이브러리 로딩 중...");
-      return;
-    }
+          const handleFileUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const arrayBuffer = e.target.result;
-        const workbook = window.XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        const rows = jsonData.slice(3).filter(row => row[3] && row[4]);
-        const parsedData = rows.map(cols => ({
-          type: String(cols[2] || '').trim(),
-          group: String(cols[3] || '').trim(),
-          size: String(cols[4] || '').trim(),
-          rating: String(cols[5] || '').trim(),
-          sSize: String(cols[6] || '').trim(),
-          sOD: String(cols[7] || '').trim(),
-          sBCD: String(cols[9] || '').trim(),
-          sStdThick: String(cols[11] || '').trim(),
-          sMyThick: String(cols[12] || '').trim(),
-          sBoltSize: String(cols[13] || '').trim(),
-          sQty: String(cols[14] || '').trim(),
-          sMatl: String(cols[16] || '').trim(),
-          sStudSpec: String(cols[20] || '').trim(),
-          dSize: String(cols[21] || '').trim(),
-          dOD: String(cols[22] || '').trim(),
-          dBCD: String(cols[24] || '').trim(),
-          dStdThick: String(cols[26] || '').trim(),
-          dMyThick: String(cols[27] || '').trim(),
-          dBoltSize: String(cols[28] || '').trim(),
-          dQty: String(cols[29] || '').trim(),
-          dMatl: String(cols[31] || '').trim(),
-          dStudSpec: String(cols[35] || '').trim(),
-        }));
+            if (!window.XLSX) {
+              setError("라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.");
+              return;
+            }
 
-        setData(parsedData);
-        const uniqueGroups = [...new Set(parsedData.map(item => item.group))].sort();
-        setGroups(uniqueGroups);
-        if (uniqueGroups.length > 0) setSelectedGroup(uniqueGroups[0]);
-        setIsFileLoaded(true);
-        setError(null);
-      } catch (err) {
-        setError("파일 분석 오류");
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const availableRatings = useMemo(() => {
-    if (!selectedGroup) return [];
-    const ratings = data.filter(item => item.group === selectedGroup).map(item => item.rating);
-    return [...new Set(ratings)].sort();
-  }, [selectedGroup, data]);
-
-  useEffect(() => {
-    if (availableRatings.length > 0) {
-      setSelectedRating(availableRatings[0]);
-    }
-  }, [availableRatings]);
-
-  const filteredResult = useMemo(() => {
-    if (!selectedGroup || !selectedRating) return null;
-    const searchStr = sizeInput.toLowerCase().replace(/\s/g,'');
-    return data.find(item => 
-      item.group === selectedGroup && 
-      item.rating === selectedRating &&
-      (item.size.toLowerCase().replace(/\s/g,'') === searchStr || 
-       item.size.toLowerCase().replace(/\s/g,'').includes(searchStr))
-    );
-  }, [selectedGroup, selectedRating, sizeInput, data]);
-
-  const InfoRow = ({ label, value, highlight, isCompany }) => (
-    <div className={`flex justify-between items-start py-2.5 border-b border-slate-100 last:border-0 ${isCompany ? 'bg-amber-50/50 px-3 -mx-3 rounded-lg' : ''}`}>
-      <span className={`text-[11px] font-bold uppercase tracking-tight mt-[1px] shrink-0 ${isCompany ? 'text-amber-700' : 'text-slate-500'}`}>{label}</span>
-      <span className={`text-sm font-black text-right ml-4 break-words leading-snug ${highlight ? 'text-indigo-600' : (isCompany ? 'text-amber-800' : 'text-slate-800')}`}>{value || "-"}</span>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-[#F1F5F9] p-4 md:p-8 font-sans text-slate-900 flex flex-col items-center">
-      <div className="max-w-6xl w-full">
-        <header className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center bg-indigo-600 p-3 rounded-2xl mb-4 shadow-xl">
-            <Layers className="text-white w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tighter mb-1 uppercase">API Flange Master</h1>
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest opacity-70">
-            ASME B16.5 & Internal Production Standards
-          </p>
-        </header>
-
-        {!isFileLoaded ? (
-          <div className="bg-white rounded-[2.5rem] shadow-2xl p-12 text-center animate-in fade-in zoom-in duration-500">
-            <div className="bg-indigo-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
-              <FileSpreadsheet className="w-10 h-10 text-indigo-500" />
-            </div>
-            <h2 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">상대플랜지 데이터 로드</h2>
-            <label className="cursor-pointer inline-flex items-center gap-3 bg-slate-900 hover:bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black transition-all shadow-xl active:scale-95 group">
-              <Upload className="w-5 h-5" />
-              엑셀 파일 선택
-              <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
-            </label>
-            {error && <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold">{error}</div>}
-          </div>
-        ) : (
-          <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
-            
-            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm border border-white p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-              <div className="w-full">
-                <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">1. PUMP GROUP</label>
-                <div className="relative">
-                  <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 appearance-none outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                    {groups.map(group => <option key={group} value={group}>{group}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-              <div className="w-full">
-                <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">2. RATING</label>
-                <div className="relative">
-                  <select value={selectedRating} onChange={(e) => setSelectedRating(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 appearance-none outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                    {availableRatings.map(rate => <option key={rate} value={rate}>{rate}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-              <div className="w-full">
-                <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">3. PUMP SIZE (MODEL)</label>
-                <div className="relative">
-                  <input type="text" value={sizeInput} onChange={(e) => setSizeInput(e.target.value)} placeholder="Search (ex: 10X8-25)" className="w-full p-4 pl-12 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
-                  <Search className="absolute left-4 top-4.5 text-slate-300 w-5 h-5" />
-                </div>
-              </div>
-            </div>
-
-            {filteredResult ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const arrayBuffer = e.target.result;
+                const workbook = window.XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                {/* Suction Card */}
-                <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden transition-transform hover:scale-[1.01]">
-                  <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
-                    <div>
-                      <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1 italic">Inlet Section</p>
-                      <h2 className="text-3xl font-black tracking-tighter">SUCTION</h2>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black opacity-60 uppercase mb-1 tracking-widest">NPS</p>
-                      <span className="text-4xl font-black leading-none">{filteredResult.sSize}"</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <div className="space-y-8">
-                        <div>
-                          <h4 className="text-[12px] font-black text-indigo-600 uppercase tracking-widest mb-3 border-l-4 border-indigo-600 pl-3">ASME B16.5 규격</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="외경 (OD)" value={filteredResult.sOD} />
-                            <InfoRow label="RF단 외경" value={getRFDiameter(filteredResult.sSize)} highlight />
-                            <InfoRow label="B.C.D" value={filteredResult.sBCD} />
-                            <InfoRow label="Bolt Hole Size" value={getHoleSize(filteredResult.sSize)} highlight />
-                            <InfoRow label="규격 두께" value={filteredResult.sStdThick} />
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-widest mb-3 border-l-4 border-amber-600 pl-3">당사 사양</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="제작 두께" value={filteredResult.sMyThick} isCompany highlight />
-                          </div>
-                        </div>
-                      </div>
+                const rows = jsonData.slice(3).filter(row => row[3] && row[4]);
+                const parsedData = rows.map(cols => ({
+                  type: String(cols[2] || '').trim(),
+                  group: String(cols[3] || '').trim(),
+                  size: String(cols[4] || '').trim(),
+                  rating: String(cols[5] || '').trim(),
+                  sSize: String(cols[6] || '').trim(),
+                  sOD: String(cols[7] || '').trim(),
+                  sBCD: String(cols[9] || '').trim(),
+                  sStdThick: String(cols[11] || '').trim(),
+                  sMyThick: String(cols[12] || '').trim(),
+                  sBoltSize: String(cols[13] || '').trim(),
+                  sQty: String(cols[14] || '').trim(),
+                  sMatl: String(cols[16] || '').trim(),
+                  sStudSpec: String(cols[20] || '').trim(),
+                  dSize: String(cols[21] || '').trim(),
+                  dOD: String(cols[22] || '').trim(),
+                  dBCD: String(cols[24] || '').trim(),
+                  dStdThick: String(cols[26] || '').trim(),
+                  dMyThick: String(cols[27] || '').trim(),
+                  dBoltSize: String(cols[28] || '').trim(),
+                  dQty: String(cols[29] || '').trim(),
+                  dMatl: String(cols[31] || '').trim(),
+                  dStudSpec: String(cols[35] || '').trim(),
+                }));
 
-                      <div className="space-y-8">
-                        <div>
-                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="Bolt Size" value={getFullBoltSpec(filteredResult.sBoltSize)} highlight />
-                            <InfoRow label="Quantity" value={`${filteredResult.sQty} EA`} />
-                            <InfoRow label="Material" value={filteredResult.sMatl} />
-                          </div>
-                        </div>
-                      </div>
+                setData(parsedData);
+                const uniqueGroups = [...new Set(parsedData.map(item => item.group))].sort();
+                setGroups(uniqueGroups);
+                if (uniqueGroups.length > 0) setSelectedGroup(uniqueGroups[0]);
+                setIsFileLoaded(true);
+                setError(null);
+              } catch (err) {
+                setError("파일 분석 오류가 발생했습니다.");
+              }
+            };
+            reader.readAsArrayBuffer(file);
+          };
+
+          const availableRatings = useMemo(() => {
+            if (!selectedGroup) return [];
+            const ratings = data.filter(item => item.group === selectedGroup).map(item => item.rating);
+            return [...new Set(ratings)].sort();
+          }, [selectedGroup, data]);
+
+          useEffect(() => {
+            if (availableRatings.length > 0) {
+              setSelectedRating(availableRatings[0]);
+            }
+          }, [availableRatings]);
+
+          const filteredResult = useMemo(() => {
+            if (!selectedGroup || !selectedRating) return null;
+            const searchStr = sizeInput.toLowerCase().replace(/\s/g,'');
+            return data.find(item => 
+              item.group === selectedGroup && 
+              item.rating === selectedRating &&
+              (item.size.toLowerCase().replace(/\s/g,'') === searchStr || 
+               item.size.toLowerCase().replace(/\s/g,'').includes(searchStr))
+            );
+          }, [selectedGroup, selectedRating, sizeInput, data]);
+
+          const InfoRow = ({ label, value, highlight, isCompany }) => (
+            <div className={`flex justify-between items-start py-2.5 border-b border-slate-100 last:border-0 ${isCompany ? 'bg-amber-50/50 px-3 -mx-3 rounded-lg' : ''}`}>
+              <span className={`text-[11px] font-bold uppercase tracking-tight mt-[1px] shrink-0 ${isCompany ? 'text-amber-700' : 'text-slate-500'}`}>{label}</span>
+              <span className={`text-sm font-black text-right ml-4 break-words leading-snug ${highlight ? 'text-indigo-600' : (isCompany ? 'text-amber-800' : 'text-slate-800')}`}>{value || "-"}</span>
+            </div>
+          );
+
+          return (
+            <div className="min-h-screen bg-[#F1F5F9] p-4 md:p-8 font-sans text-slate-900 flex flex-col items-center">
+              <div className="max-w-6xl w-full">
+                <header className="mb-8 text-center">
+                  <div className="inline-flex items-center justify-center bg-indigo-600 p-3 rounded-2xl mb-4 shadow-xl">
+                    <Layers className="text-white w-8 h-8" />
+                  </div>
+                  <h1 className="text-3xl font-black text-slate-800 tracking-tighter mb-1 uppercase">API Flange Master</h1>
+                  <p className="text-slate-500 font-bold text-xs uppercase tracking-widest opacity-70">
+                    ASME B16.5 & Internal Production Standards
+                  </p>
+                </header>
+
+                {!isFileLoaded ? (
+                  <div className="bg-white rounded-[2.5rem] shadow-2xl p-12 text-center animate-in fade-in zoom-in duration-500">
+                    <div className="bg-indigo-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+                      <FileSpreadsheet className="w-10 h-10 text-indigo-500" />
                     </div>
+                    <h2 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">상대플랜지 데이터 로드</h2>
+                    <label className="cursor-pointer inline-flex items-center gap-3 bg-slate-900 hover:bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black transition-all shadow-xl active:scale-95 group">
+                      <Upload className="w-5 h-5" />
+                      엑셀 파일 선택
+                      <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                    {error && <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold">{error}</div>}
+                  </div>
+                ) : (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
                     
-                    <div className="mt-10 pt-6 border-t border-slate-100">
-                      <h4 className="text-[12px] font-black text-indigo-800 uppercase tracking-widest mb-3 border-l-4 border-indigo-800 pl-3">STUD BOLT 정보</h4>
-                      <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
-                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Detailed Spec</span>
-                        <p className="text-base font-black text-indigo-900 leading-tight">
-                          {filteredResult.sStudSpec || "정보 없음"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Discharge Card */}
-                <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden transition-transform hover:scale-[1.01]">
-                  <div className="bg-emerald-600 p-6 text-white flex justify-between items-start">
-                    <div>
-                      <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1 italic">Outlet Section</p>
-                      <h2 className="text-3xl font-black tracking-tighter">DISCHARGE</h2>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black opacity-60 uppercase mb-1 tracking-widest">NPS</p>
-                      <span className="text-4xl font-black leading-none">{filteredResult.dSize}"</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <div className="space-y-8">
-                        <div>
-                          <h4 className="text-[12px] font-black text-emerald-600 uppercase tracking-widest mb-3 border-l-4 border-emerald-600 pl-3">ASME B16.5 규격</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="외경 (OD)" value={filteredResult.dOD} />
-                            <InfoRow label="RF단 외경" value={getRFDiameter(filteredResult.dSize)} highlight />
-                            <InfoRow label="B.C.D" value={filteredResult.dBCD} />
-                            <InfoRow label="Bolt Hole Size" value={getHoleSize(filteredResult.dSize)} highlight />
-                            <InfoRow label="규격 두께" value={filteredResult.dStdThick} />
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-widest mb-3 border-l-4 border-amber-600 pl-3">당사 사양</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="제작 두께" value={filteredResult.dMyThick} isCompany highlight />
-                          </div>
+                    <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm border border-white p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                      <div className="w-full">
+                        <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">1. PUMP GROUP</label>
+                        <div className="relative">
+                          <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 appearance-none outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                            {groups.map(group => <option key={group} value={group}>{group}</option>)}
+                          </select>
+                          <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
                         </div>
                       </div>
-
-                      <div className="space-y-8">
-                        <div>
-                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
-                          <div className="space-y-1">
-                            <InfoRow label="Bolt Size" value={getFullBoltSpec(filteredResult.dBoltSize)} highlight />
-                            <InfoRow label="Quantity" value={`${filteredResult.dQty} EA`} />
-                            <InfoRow label="Material" value={filteredResult.dMatl} />
-                          </div>
+                      <div className="w-full">
+                        <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">2. RATING</label>
+                        <div className="relative">
+                          <select value={selectedRating} onChange={(e) => setSelectedRating(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 appearance-none outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                            {availableRatings.map(rate => <option key={rate} value={rate}>{rate}</option>)}
+                          </select>
+                          <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <label className="text-[10px] font-black text-slate-400 mb-2 block tracking-widest px-1">3. PUMP SIZE (MODEL)</label>
+                        <div className="relative">
+                          <input type="text" value={sizeInput} onChange={(e) => setSizeInput(e.target.value)} placeholder="Search (ex: 10X8-25)" className="w-full p-4 pl-12 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                          <Search className="absolute left-4 top-4.5 text-slate-300 w-5 h-5" />
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-10 pt-6 border-t border-slate-100">
-                      <h4 className="text-[12px] font-black text-indigo-800 uppercase tracking-widest mb-3 border-l-4 border-indigo-800 pl-3">STUD BOLT 정보</h4>
-                      <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
-                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Detailed Spec</span>
-                        <p className="text-base font-black text-indigo-900 leading-tight">
-                          {filteredResult.dStudSpec || "정보 없음"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    {filteredResult ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        {/* Suction Card */}
+                        <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden transition-transform hover:scale-[1.01]">
+                          <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
+                            <div>
+                              <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1 italic">Inlet Section</p>
+                              <h2 className="text-3xl font-black tracking-tighter">SUCTION</h2>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] font-black opacity-60 uppercase mb-1 tracking-widest">NPS</p>
+                              <span className="text-4xl font-black leading-none">{filteredResult.sSize}"</span>
+                            </div>
+                          </div>
+                          
+                          <div className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                              <div className="space-y-8">
+                                <div>
+                                  <h4 className="text-[12px] font-black text-indigo-600 uppercase tracking-widest mb-3 border-l-4 border-indigo-600 pl-3">ASME B16.5 규격</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="외경 (OD)" value={filteredResult.sOD} />
+                                    <InfoRow label="RF단 외경" value={getRFDiameter(filteredResult.sSize)} highlight />
+                                    <InfoRow label="B.C.D" value={filteredResult.sBCD} />
+                                    <InfoRow label="Bolt Hole Size" value={getHoleSize(filteredResult.sSize)} highlight />
+                                    <InfoRow label="규격 두께" value={filteredResult.sStdThick} />
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-widest mb-3 border-l-4 border-amber-600 pl-3">당사 사양</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="제작 두께" value={filteredResult.sMyThick} isCompany highlight />
+                                  </div>
+                                </div>
+                              </div>
 
-                <div className="lg:col-span-2 bg-slate-900 rounded-[2rem] p-8 flex flex-wrap justify-around items-center gap-6 shadow-2xl">
-                  <div className="text-center group">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Rating</p>
-                    <p className="text-3xl font-black text-white">{filteredResult.rating}</p>
+                              <div className="space-y-8">
+                                <div>
+                                  <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="Bolt Size" value={getFullBoltSpec(filteredResult.sBoltSize)} highlight />
+                                    <InfoRow label="Quantity" value={`${filteredResult.sQty} EA`} />
+                                    <InfoRow label="Material" value={filteredResult.sMatl} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-10 pt-6 border-t border-slate-100">
+                              <h4 className="text-[12px] font-black text-indigo-800 uppercase tracking-widest mb-3 border-l-4 border-indigo-800 pl-3">STUD BOLT 정보</h4>
+                              <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
+                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Detailed Spec</span>
+                                <p className="text-base font-black text-indigo-900 leading-tight">
+                                  {filteredResult.sStudSpec || "정보 없음"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Discharge Card */}
+                        <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden transition-transform hover:scale-[1.01]">
+                          <div className="bg-emerald-600 p-6 text-white flex justify-between items-start">
+                            <div>
+                              <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1 italic">Outlet Section</p>
+                              <h2 className="text-3xl font-black tracking-tighter">DISCHARGE</h2>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] font-black opacity-60 uppercase mb-1 tracking-widest">NPS</p>
+                              <span className="text-4xl font-black leading-none">{filteredResult.dSize}"</span>
+                            </div>
+                          </div>
+                          
+                          <div className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                              <div className="space-y-8">
+                                <div>
+                                  <h4 className="text-[12px] font-black text-emerald-600 uppercase tracking-widest mb-3 border-l-4 border-emerald-600 pl-3">ASME B16.5 규격</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="외경 (OD)" value={filteredResult.dOD} />
+                                    <InfoRow label="RF단 외경" value={getRFDiameter(filteredResult.dSize)} highlight />
+                                    <InfoRow label="B.C.D" value={filteredResult.dBCD} />
+                                    <InfoRow label="Bolt Hole Size" value={getHoleSize(filteredResult.dSize)} highlight />
+                                    <InfoRow label="규격 두께" value={filteredResult.dStdThick} />
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-widest mb-3 border-l-4 border-amber-600 pl-3">당사 사양</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="제작 두께" value={filteredResult.dMyThick} isCompany highlight />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-8">
+                                <div>
+                                  <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
+                                  <div className="space-y-1">
+                                    <InfoRow label="Bolt Size" value={getFullBoltSpec(filteredResult.dBoltSize)} highlight />
+                                    <InfoRow label="Quantity" value={`${filteredResult.dQty} EA`} />
+                                    <InfoRow label="Material" value={filteredResult.dMatl} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-10 pt-6 border-t border-slate-100">
+                              <h4 className="text-[12px] font-black text-indigo-800 uppercase tracking-widest mb-3 border-l-4 border-indigo-800 pl-3">STUD BOLT 정보</h4>
+                              <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
+                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Detailed Spec</span>
+                                <p className="text-base font-black text-indigo-900 leading-tight">
+                                  {filteredResult.dStudSpec || "정보 없음"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="lg:col-span-2 bg-slate-900 rounded-[2rem] p-8 flex flex-wrap justify-around items-center gap-6 shadow-2xl">
+                          <div className="text-center group">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Rating</p>
+                            <p className="text-3xl font-black text-white">{filteredResult.rating}</p>
+                          </div>
+                          <div className="h-10 w-px bg-slate-800 hidden md:block"></div>
+                          <div className="text-center group">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Pump Model</p>
+                            <p className="text-3xl font-black text-white">{filteredResult.size}</p>
+                          </div>
+                          <div className="h-10 w-px bg-slate-800 hidden md:block"></div>
+                          <div className="text-center group">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Structure Type</p>
+                            <p className="text-3xl font-black text-white">{filteredResult.type}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-[3rem] border-2 border-dashed border-slate-200 p-24 text-center">
+                        <Search className="w-10 h-10 text-slate-200 mx-auto mb-6" />
+                        <h3 className="text-xl font-black text-slate-300 uppercase tracking-tighter">Please select Rating and Model</h3>
+                      </div>
+                    )}
                   </div>
-                  <div className="h-10 w-px bg-slate-800 hidden md:block"></div>
-                  <div className="text-center group">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Pump Model</p>
-                    <p className="text-3xl font-black text-white">{filteredResult.size}</p>
-                  </div>
-                  <div className="h-10 w-px bg-slate-800 hidden md:block"></div>
-                  <div className="text-center group">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Structure Type</p>
-                    <p className="text-3xl font-black text-white">{filteredResult.type}</p>
-                  </div>
-                </div>
+                )}
               </div>
-            ) : (
-              <div className="bg-white rounded-[3rem] border-2 border-dashed border-slate-200 p-24 text-center">
-                <Search className="w-10 h-10 text-slate-200 mx-auto mb-6" />
-                <h3 className="text-xl font-black text-slate-300 uppercase tracking-tighter">Please select Rating and Model</h3>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+            </div>
+          );
+        };
 
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
