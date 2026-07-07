@@ -41,60 +41,67 @@
   <div id="root"></div>
 
   <!-- React Application Source Code -->
-  <!-- data-type="module" 속성을 추가하여 Babel이 컴파일된 스크립트를 ES 모듈 타입으로 DOM에 주입하도록 수정했습니다. -->
   <script type="text/babel" data-type="module">
     import React, { useState, useMemo, useEffect } from 'react';
     import { createRoot } from 'react-dom/client';
 
     // ==========================================
-    // Custom SVG Icons (Replaces Lucide-React)
+    // Custom SVG Icons (Replacing lucide-react for standalone HTML)
     // ==========================================
-    const SearchIcon = () => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    const Search = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     );
-
-    const LayersIcon = () => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+    const Layers = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
     );
-
-    const FileSpreadsheetIcon = () => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
+    const FileSpreadsheet = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
     );
-
-    const UploadIcon = () => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    const Upload = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
     );
-
-    const ChevronDownIcon = ({ className }) => (
+    const ChevronDown = ({ className }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"></polyline></svg>
     );
-
-    const InfoIcon = ({ className }) => (
+    const Info = ({ className }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
     );
-
-    const CalculatorIcon = () => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>
+    const Calculator = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>
     );
-
-    const AlertTriangleIcon = ({ className }) => (
+    const AlertTriangle = ({ className }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
     );
-
-    const PlayIcon = ({ className }) => (
+    const Play = ({ className }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={className}><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
     );
 
     // ==========================================
-    // Static Database Configurations
+    // 1. ASME B16.5 / B16.1 UNC Thread Data (TPI)
     // ==========================================
     const UNC_THREAD_DATA = {
-      "1/2": "13", "5/8": "11", "3/4": "10", "7/8": "9", "1": "8",
-      "1-1/8": "7", "1-1/4": "7", "1-3/8": "6", "1-1/2": "6", "1-5/8": "8",
-      "1-3/4": "5", "1-7/8": "8", "2": "4.5", "2-1/4": "4.5", "2-1/2": "4",
-      "2-3/4": "4", "3": "4"
+      "1/2": "13",
+      "5/8": "11",
+      "3/4": "10",
+      "7/8": "9",
+      "1": "8",
+      "1-1/8": "7",
+      "1-1/4": "7",
+      "1-3/8": "6",
+      "1-1/2": "6",
+      "1-5/8": "8",
+      "1-3/4": "5",
+      "1-7/8": "8",
+      "2": "4.5",
+      "2-1/4": "4.5",
+      "2-1/2": "4",
+      "2-3/4": "4",
+      "3": "4"
     };
 
+    // ==========================================
+    // 2. ASME B16.5 Raised Face (RF) Diameter (mm)
+    // ==========================================
     const B16_5_RF_DATA = {
       "0.5": 34.9, "0.75": 42.9, "1": 50.8, "1.25": 63.5, "1.5": 73.0, 
       "2": 92.1, "2.5": 104.8, "3": 127.0, "3.5": 139.7, "4": 157.2, 
@@ -102,6 +109,9 @@
       "14": 412.8, "16": 469.9, "18": 533.4, "20": 584.2, "24": 692.2
     };
 
+    // ==========================================
+    // 3. ASME B16.5 Diameter of Bolt Holes (mm)
+    // ==========================================
     const B16_5_HOLE_DATA = {
       "0.5": 15.9, "0.75": 19.1, "1": 19.1, "1.25": 19.1, "1.5": 22.2, 
       "2": 19.1, "2.5": 22.2, "3": 22.2, "3.5": 22.2, "4": 22.2, 
@@ -109,6 +119,10 @@
       "14": 31.8, "16": 34.9, "18": 34.9, "20": 34.9, "24": 41.3
     };
 
+    // ==========================================
+    // 4. ASME B16.5 Standard Flange Reference Database
+    //    (For the standalone Calculator tab - Class 150 & Class 300)
+    // ==========================================
     const ASME_STANDARDS_DB = {
       "150": {
         "0.5": { od: 90, thick: 11.1, bcd: 60.3, holes: 4, boltSize: "1/2", boltHole: 15.9, rf: 34.9 },
@@ -142,7 +156,7 @@
         "3": { od: 210, thick: 28.6, bcd: 168.3, holes: 8, boltSize: "3/4", boltHole: 22.2, rf: 127.0 },
         "4": { od: 255, thick: 31.8, bcd: 200.0, holes: 8, boltSize: "3/4", boltHole: 22.2, rf: 157.2 },
         "5": { od: 280, thick: 35.0, bcd: 235.0, holes: 8, boltSize: "3/4", boltHole: 22.2, rf: 185.7 },
-        "6": { od: 320, thick: 36.6, bcd: 270.0, holes: 12, boltSize: "3/4", boltHole: 22.2, rf: 215.9 },
+        "6": { od: 320, thick: 36.6, bcd: 270.0, holes: 12, boltSize: "3/4", boltHole: 22.2, rf: 215.9 }, // 3/4" 로 올바르게 정의되어 있음
         "8": { od: 380, thick: 41.3, bcd: 330.2, holes: 12, boltSize: "7/8", boltHole: 25.4, rf: 269.9 },
         "10": { od: 445, thick: 47.7, bcd: 387.4, holes: 16, boltSize: "1", boltHole: 28.6, rf: 323.8 },
         "12": { od: 520, thick: 50.8, bcd: 450.8, holes: 16, boltSize: "1-1/8", boltHole: 31.8, rf: 381.0 },
@@ -154,6 +168,9 @@
       }
     };
 
+    // ==========================================
+    // 5. Mock / Template Data for Easy Testing
+    // ==========================================
     const MOCK_PUMP_DATA = [
       {
         type: "Double Suction (양흡입)",
@@ -213,10 +230,10 @@
         sBCD: "270.0",
         sStdThick: "36.6",
         sMyThick: "38.0",
-        sBoltSize: "3/4\"",
+        sBoltSize: "7/8\"", // 사용자가 보고있는 원인! (Mock 데이터 또는 실제 엑셀에 잘못 기재된 값)
         sQty: "12",
         sMatl: "A105",
-        sStudSpec: "STUD BOLT 3/4-10UNC X 140L (ASTM A193 Gr.B7)",
+        sStudSpec: "STUD BOLT 7/8-9UNC X 140L (ASTM A193 Gr.B7)",
         dSize: "4",
         dOD: "255",
         dBCD: "200.0",
@@ -229,13 +246,8 @@
       }
     ];
 
-    // ==========================================
-    // Main App Component
-    // ==========================================
     const App = () => {
       const [activeTab, setActiveTab] = useState('database');
-
-      // Excel / Database State
       const [data, setData] = useState([]);
       const [groups, setGroups] = useState([]);
       const [selectedGroup, setSelectedGroup] = useState('');
@@ -243,10 +255,21 @@
       const [sizeInput, setSizeInput] = useState('');
       const [isFileLoaded, setIsFileLoaded] = useState(false);
       const [error, setError] = useState(null);
-
-      // Standalone Calculator State
+      const [isXLSXReady, setIsXLSXReady] = useState(false);
       const [calcRating, setCalcRating] = useState('150');
       const [calcSize, setCalcSize] = useState('2');
+
+      useEffect(() => {
+        if (window.XLSX) {
+          setIsXLSXReady(true);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        script.async = true;
+        script.onload = () => setIsXLSXReady(true);
+        document.head.appendChild(script);
+      }, []);
 
       const parseSize = (sizeStr) => {
         if (!sizeStr) return null;
@@ -267,11 +290,10 @@
         if (isNaN(num)) return sizeVal;
         
         const fractionMap = {
-          "0.5": "1/2", "0.75": "3/4", "1": "1", "1.25": "1-1/4",
-          "1.5": "1-1/2", "2": "2", "2.5": "2-1/2", "3": "3",
-          "3.5": "3-1/2", "4": "4", "5": "5", "6": "6", "8": "8",
-          "10": "10", "12": "12", "14": "14", "16": "16", "18": "18",
-          "20": "20", "24": "24"
+          "0.5": "1/2", "0.75": "3/4", "1": "1", "1.25": "1-1/4", "1.5": "1-1/2",
+          "2": "2", "2.5": "2-1/2", "3": "3", "3.5": "3-1/2", "4": "4", "5": "5",
+          "6": "6", "8": "8", "10": "10", "12": "12", "14": "14", "16": "16",
+          "18": "18", "20": "20", "24": "24"
         };
         return fractionMap[sizeVal] ? `${fractionMap[sizeVal]}"` : `${sizeVal}"`;
       };
@@ -297,13 +319,18 @@
         const file = event.target.files[0];
         if (!file) return;
 
+        if (!isXLSXReady) {
+          setError("Excel 라이브러리를 가져오는 중입니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
             const arrayBuffer = e.target.result;
-            const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+            const workbook = window.XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
             const rows = jsonData.slice(3).filter(row => row[3] && row[4]);
             const parsedData = rows.map(cols => ({
@@ -382,23 +409,62 @@
         return stdSet[calcSize] || null;
       }, [calcRating, calcSize]);
 
-      const InfoRow = ({ label, value, highlight, isCompany }) => (
-        <div className={`flex justify-between items-center py-3 border-b border-slate-100 last:border-0 ${isCompany ? 'bg-amber-50/70 px-3 -mx-3 rounded-lg' : ''}`}>
-          <span className={`text-[11px] font-bold uppercase tracking-wider ${isCompany ? 'text-amber-800' : 'text-slate-500'}`}>{label}</span>
-          <span className={`text-sm font-extrabold text-right ml-4 break-words leading-tight ${highlight ? 'text-indigo-600' : (isCompany ? 'text-amber-950 font-black' : 'text-slate-800')}`}>
-            {value || "-"}
-          </span>
+      // ==========================================
+      // 스마트 검증 로직 추가 구역
+      // ==========================================
+      
+      // 1. 제작 두께가 표준보다 3mm 이상 큰지 검증
+      const isOverSize = (stdThick, myThick) => {
+        const std = parseFloat(stdThick);
+        const my = parseFloat(myThick);
+        if (isNaN(std) || isNaN(my)) return false;
+        return my - std >= 3;
+      };
+
+      // 2. 엑셀에 입력된 볼트 규격이 ASME 표준과 다른지(오기재 여부) 검증
+      const isNonStdBolt = (rating, sizeStr, boltStr) => {
+        if (!rating || !sizeStr || !boltStr) return false;
+        
+        // rating에서 숫자만 추출 ("300#" -> "300")
+        const cleanRating = rating.replace(/[^0-9]/g, '');
+        const cleanSize = parseSize(sizeStr);
+        const cleanBolt = boltStr.replace(/"/g, '').trim();
+        
+        const stdSet = ASME_STANDARDS_DB[cleanRating];
+        if (stdSet && stdSet[cleanSize]) {
+          // 엑셀 볼트값과 내장된 표준 DB의 볼트값이 다르면 true 반환
+          return stdSet[cleanSize].boltSize !== cleanBolt;
+        }
+        return false;
+      };
+
+      // 요청하신 '도장 모양'으로 여백에 배치되는 컴포넌트 렌더러
+      const InfoRow = ({ label, value, highlight, isCompany, badge }) => (
+        <div className={`flex flex-wrap justify-between items-center gap-x-4 gap-y-2 py-3 border-b border-slate-100 last:border-0 ${isCompany ? 'bg-amber-50/70 px-3 -mx-3 rounded-lg' : ''}`}>
+          <span className={`text-[11px] font-bold uppercase tracking-wider shrink-0 ${isCompany ? 'text-amber-800' : 'text-slate-500'}`}>{label}</span>
+          <div className="flex items-center gap-3 ml-auto min-w-0">
+            <span className={`text-sm font-extrabold text-right whitespace-nowrap leading-tight ${highlight ? 'text-indigo-600' : (isCompany ? 'text-amber-950 font-black' : 'text-slate-800')}`}>
+              {value || "-"}
+            </span>
+            {badge && (
+              <div className="flex-shrink-0 origin-center rotate-[-4deg]">
+                <span className="inline-block border-[2px] border-red-500 text-red-600 bg-red-50/80 text-[10px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest shadow-sm whitespace-nowrap">
+                  {badge}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       );
 
       return (
-        <div className="p-4 md:p-8 flex flex-col items-center">
+        <div className="min-h-screen bg-gradient-to-tr from-slate-100 via-slate-50 to-blue-50/50 p-4 md:p-8 font-sans text-slate-950 flex flex-col items-center">
           <div className="max-w-6xl w-full">
             
             {/* ================= HEADER ================= */}
             <header className="mb-8 text-center">
-              <div className="inline-flex items-center justify-center bg-indigo-600 p-3.5 rounded-2xl mb-4 shadow-xl shadow-indigo-200 text-white">
-                <LayersIcon />
+              <div className="inline-flex items-center justify-center bg-indigo-600 p-3.5 rounded-2xl mb-4 shadow-xl shadow-indigo-200">
+                <Layers className="text-white w-7 h-7" />
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-2 uppercase">API Flange Master</h1>
               <p className="text-slate-500 font-bold text-xs uppercase tracking-widest max-w-md mx-auto">
@@ -417,7 +483,7 @@
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <FileSpreadsheetIcon />
+                  <FileSpreadsheet className="w-4 h-4" />
                   펌프 사양 조회 DB
                 </button>
                 <button 
@@ -428,7 +494,7 @@
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <CalculatorIcon />
+                  <Calculator className="w-4 h-4" />
                   ASME B16.5 규격기
                 </button>
               </div>
@@ -439,8 +505,8 @@
               <div>
                 {!isFileLoaded ? (
                   <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-8 md:p-14 text-center max-w-2xl mx-auto transition-all">
-                    <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600">
-                      <FileSpreadsheetIcon />
+                    <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FileSpreadsheet className="w-9 h-9 text-indigo-600 animate-pulse" />
                     </div>
                     <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">펌프 플랜지 설계 데이터 로드</h2>
                     <p className="text-slate-500 text-sm max-w-md mx-auto mb-8 leading-relaxed font-medium">
@@ -449,7 +515,7 @@
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                       <label className="cursor-pointer inline-flex items-center gap-2.5 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 text-sm">
-                        <UploadIcon />
+                        <Upload className="w-4 h-4" />
                         엑셀 규격서 업로드 (.xlsx)
                         <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
                       </label>
@@ -458,33 +524,17 @@
                         onClick={loadMockData}
                         className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg active:scale-95 text-sm"
                       >
-                        <PlayIcon className="text-emerald-400" />
+                        <Play className="w-4 h-4 text-emerald-400 fill-emerald-400" />
                         샘플 데이터로 가구동
                       </button>
                     </div>
 
                     {error && (
                       <div className="mt-8 p-4 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-2">
-                        <AlertTriangleIcon className="text-red-500 shrink-0" />
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
                         {error}
                       </div>
                     )}
-
-                    <div className="mt-12 pt-6 border-t border-slate-100 text-left">
-                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                        <InfoIcon className="text-slate-400" /> 엑셀 업로드 템플릿 열 가이드 (4번째 Row부터 분석시작)
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px] text-slate-500 font-bold">
-                        <div>Col 2: TYPE (설계타입)</div>
-                        <div>Col 3: GROUP (펌프그룹)</div>
-                        <div>Col 4: SIZE (모델명)</div>
-                        <div>Col 5: RATING (압력)</div>
-                        <div>Col 6: Suction Size (인치)</div>
-                        <div>Col 11: Suction 표준두께</div>
-                        <div>Col 12: Suction 당사두께</div>
-                        <div>Col 13: Suction 볼트규격</div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -501,7 +551,7 @@
                           >
                             {groups.map(group => <option key={group} value={group}>{group}</option>)}
                           </select>
-                          <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
                         </div>
                       </div>
 
@@ -515,7 +565,7 @@
                           >
                             {availableRatings.map(rate => <option key={rate} value={rate}>{rate}</option>)}
                           </select>
-                          <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
                         </div>
                       </div>
 
@@ -526,10 +576,10 @@
                             type="text" 
                             value={sizeInput} 
                             onChange={(e) => setSizeInput(e.target.value)} 
-                            placeholder="예시: 10X8-25 또는 3X2" 
+                            placeholder="예시: 6X4-13" 
                             className="w-full p-4 pl-12 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-2xl font-black text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm placeholder:text-slate-400" 
                           />
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><SearchIcon /></div>
+                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         </div>
                       </div>
                     </div>
@@ -569,7 +619,13 @@
                                 <div>
                                   <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-wider mb-3 border-l-4 border-amber-600 pl-3">당사 제작 사양</h4>
                                   <div className="space-y-1">
-                                    <InfoRow label="적용 제작 두께" value={`${filteredResult.sMyThick} mm`} isCompany highlight />
+                                    <InfoRow 
+                                      label="적용 제작 두께" 
+                                      value={`${filteredResult.sMyThick} mm`} 
+                                      isCompany 
+                                      highlight 
+                                      badge={isOverSize(filteredResult.sStdThick, filteredResult.sMyThick) ? "OVER SIZE" : null}
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -579,7 +635,12 @@
                                 <div>
                                   <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-wider mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
                                   <div className="space-y-1">
-                                    <InfoRow label="나사산 규격" value={getFullBoltSpec(filteredResult.sBoltSize)} highlight />
+                                    <InfoRow 
+                                      label="나사산 규격" 
+                                      value={getFullBoltSpec(filteredResult.sBoltSize)} 
+                                      highlight 
+                                      badge={isNonStdBolt(filteredResult.rating, filteredResult.sSize, filteredResult.sBoltSize) ? "NON-STD" : null}
+                                    />
                                     <InfoRow label="볼트 수량" value={`${filteredResult.sQty} EA`} />
                                     <InfoRow label="재질 기준" value={filteredResult.sMatl} />
                                   </div>
@@ -634,7 +695,13 @@
                                 <div>
                                   <h4 className="text-[12px] font-black text-amber-600 uppercase tracking-wider mb-3 border-l-4 border-amber-600 pl-3">당사 제작 사양</h4>
                                   <div className="space-y-1">
-                                    <InfoRow label="적용 제작 두께" value={`${filteredResult.dMyThick} mm`} isCompany highlight />
+                                    <InfoRow 
+                                      label="적용 제작 두께" 
+                                      value={`${filteredResult.dMyThick} mm`} 
+                                      isCompany 
+                                      highlight 
+                                      badge={isOverSize(filteredResult.dStdThick, filteredResult.dMyThick) ? "OVER SIZE" : null}
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -644,7 +711,12 @@
                                 <div>
                                   <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-wider mb-3 border-l-4 border-slate-800 pl-3">BOLT 규격</h4>
                                   <div className="space-y-1">
-                                    <InfoRow label="나사산 규격" value={getFullBoltSpec(filteredResult.dBoltSize)} highlight />
+                                    <InfoRow 
+                                      label="나사산 규격" 
+                                      value={getFullBoltSpec(filteredResult.dBoltSize)} 
+                                      highlight 
+                                      badge={isNonStdBolt(filteredResult.rating, filteredResult.dSize, filteredResult.dBoltSize) ? "NON-STD" : null}
+                                    />
                                     <InfoRow label="볼트 수량" value={`${filteredResult.dQty} EA`} />
                                     <InfoRow label="재질 기준" value={filteredResult.dMatl} />
                                   </div>
@@ -668,16 +740,16 @@
                         </div>
 
                         {/* Bottom Selected Pump Summary Panel */}
-                        <div className="lg:col-span-2 bg-slate-900 rounded-[2rem] p-6 grid grid-cols-2 md:grid-cols-4 gap-6 shadow-xl relative overflow-hidden text-white">
+                        <div className="lg:col-span-2 bg-slate-900 rounded-[2rem] p-6 grid grid-cols-2 md:grid-cols-4 gap-6 shadow-xl relative overflow-hidden">
                           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl"></div>
                           
                           <div className="text-center md:text-left md:pl-4">
                             <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Model Name</p>
-                            <p className="text-xl font-black">{filteredResult.size}</p>
+                            <p className="text-xl font-black text-white">{filteredResult.size}</p>
                           </div>
                           <div className="text-center md:text-left">
                             <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Pressure Rating</p>
-                            <p className="text-xl font-black">{filteredResult.rating}</p>
+                            <p className="text-xl font-black text-white">{filteredResult.rating}</p>
                           </div>
                           <div className="text-center md:text-left">
                             <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Pump Structure</p>
@@ -692,10 +764,10 @@
                       </div>
                     ) : (
                       <div className="bg-white rounded-[3rem] border-2 border-dashed border-slate-200 p-16 text-center shadow-inner">
-                        <div className="text-slate-300 flex justify-center mb-4"><SearchIcon /></div>
+                        <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
                         <h3 className="text-base font-black text-slate-400 uppercase tracking-wider mb-1">모델 매칭 중</h3>
                         <p className="text-slate-400 text-xs font-semibold max-w-sm mx-auto leading-relaxed">
-                          상단의 PUMP SIZE 입력 칸에 펌프 고유 번호 또는 배관 사이즈 규격을 정확히 입력해주세요. (예: 10X8-25)
+                          상단의 PUMP SIZE 입력 칸에 펌프 고유 번호 또는 배관 사이즈 규격을 정확히 입력해주세요. (예: 6X4-13)
                         </p>
                       </div>
                     )}
@@ -710,8 +782,8 @@
                 <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-6 md:p-10">
                   
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600">
-                      <CalculatorIcon />
+                    <div className="bg-indigo-50 p-3 rounded-2xl">
+                      <Calculator className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-slate-900">ASME B16.5 규격 마스터 캘큘레이터</h2>
@@ -754,7 +826,7 @@
                             </option>
                           ))}
                         </select>
-                        <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-5 h-5" />
                       </div>
                     </div>
                   </div>
@@ -793,7 +865,7 @@
                       {/* Mechanical Standard Blueprint Hint */}
                       <div className="md:col-span-2 bg-amber-50/40 p-5 rounded-2xl border border-amber-200/50 flex items-start gap-4">
                         <div className="bg-amber-100/70 p-2.5 rounded-xl text-amber-800 shrink-0">
-                          <InfoIcon />
+                          <Info className="w-5 h-5" />
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider mb-1">설계자 주치 사항</h4>
@@ -819,7 +891,6 @@
       );
     };
 
-    // Render application
     const root = createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
